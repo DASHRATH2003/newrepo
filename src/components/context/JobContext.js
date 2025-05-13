@@ -1,99 +1,108 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
-import config from "../../config";
+import mockJobs from "../../data/mockJobs";
 
 const JobContext = createContext();
 
 export const JobProvider = ({ children }) => {
-  const [jobs, setJobs] = useState([]);
-
-  const API = `${config.API_BASE_URL}/api/jobs`;
+  // Initialize with mock data immediately to avoid empty state
+  const [jobs, setJobs] = useState(mockJobs);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchJobs = async () => {
     try {
-      console.log("Fetching jobs from:", API);
+      console.log("Using mock jobs data since backend was removed");
+      setIsLoading(true);
+      setError(null);
 
-      // Use fetch instead of axios for more control
-      const response = await fetch(API, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Check if response is OK
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      // Use the mock data
+      setJobs(mockJobs);
 
-      // Check content type
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn("Warning: Response is not JSON. Content-Type:", contentType);
-
-        // Try to parse as JSON anyway
-        const text = await response.text();
-        console.log("Response text:", text.substring(0, 200) + (text.length > 200 ? '...' : ''));
-
-        try {
-          const data = JSON.parse(text);
-          setJobs(data);
-        } catch (parseError) {
-          console.error("Error parsing response as JSON:", parseError);
-          // Use fallback data
-          setJobs([
-            { _id: 1, title: "Software Developer", location: "Remote", description: "Full-stack developer position" },
-            { _id: 2, title: "UI/UX Designer", location: "Mumbai", description: "Design user interfaces" }
-          ]);
-        }
-      } else {
-        // Parse JSON response
-        const data = await response.json();
-        setJobs(data);
-      }
+      console.log("Mock jobs loaded:", mockJobs.length);
     } catch (error) {
-      console.error("Error fetching jobs:", error);
-      // Use fallback data
-      setJobs([
-        { _id: 1, title: "Software Developer", location: "Remote", description: "Full-stack developer position" },
-        { _id: 2, title: "UI/UX Designer", location: "Mumbai", description: "Design user interfaces" }
-      ]);
+      console.error("Error loading mock jobs:", error);
+      setError("Failed to load jobs data");
+
+      // Use fallback data in case of any error
+      if (!jobs || jobs.length === 0) {
+        setJobs([
+          {
+            id: 1,
+            position: "Software Developer",
+            category: "IT",
+            jobLocation: "Remote",
+            experience: "2-4 years",
+            education: "B.Tech/M.Tech",
+            description: "Full-stack developer position"
+          },
+          {
+            id: 2,
+            position: "UI/UX Designer",
+            category: "Design",
+            jobLocation: "Mumbai",
+            experience: "3-5 years",
+            education: "Any Design degree",
+            description: "Design user interfaces"
+          }
+        ]);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const addJob = async (jobData) => {
-    console.log("Sending job to backend:", jobData);
+    console.log("Adding job (mock):", jobData);
     try {
-      const res = await axios.post(API, jobData);
-      console.log("Job added response:", res.data);
-      setJobs((prev) => [...prev, res.data]);
+      // Create a new job with a unique ID
+      const newJob = {
+        ...jobData,
+        id: Date.now(), // Use timestamp as a unique ID
+      };
+
+      // Add the new job to the state
+      setJobs((prev) => [...prev, newJob]);
+
+      console.log("Job added successfully (mock)");
+      return newJob;
     } catch (error) {
       console.error("Error adding job:", error);
-       // Handle error
+      // Handle error
+      throw error;
     }
   };
 
   const updateJob = async (updatedJob) => {
+    console.log("Updating job (mock):", updatedJob);
     try {
-      const res = await axios.put(`${API}/${updatedJob.id}`, updatedJob); // Send the whole updatedJob
-      console.log("Updated job response:", res.data);
+      // Update the job in the state
       setJobs((prev) =>
-        prev.map((job) => (job._id === updatedJob.id ? res.data : job))
+        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job))
       );
+
+      console.log("Job updated successfully (mock)");
+      return updatedJob;
     } catch (error) {
       console.error("Error updating job:", error);
       // Handle error
+      throw error;
     }
   };
 
   const deleteJob = async (id) => {
+    console.log("Deleting job (mock):", id);
     try {
-      await axios.delete(`${API}/${id}`);
-      setJobs((prev) => prev.filter((job) => job._id !== id));
+      // Remove the job from the state
+      setJobs((prev) => prev.filter((job) => job.id !== id));
+
+      console.log("Job deleted successfully (mock)");
     } catch (error) {
-       console.error("Error deleting job:", error);
-       // Handle error
+      console.error("Error deleting job:", error);
+      // Handle error
+      throw error;
     }
   };
 
@@ -103,7 +112,15 @@ export const JobProvider = ({ children }) => {
   }, []);
 
   return (
-    <JobContext.Provider value={{ jobs, addJob, updateJob, deleteJob }}>
+    <JobContext.Provider value={{
+      jobs,
+      isLoading,
+      error,
+      addJob,
+      updateJob,
+      deleteJob,
+      refreshJobs: fetchJobs
+    }}>
       {children}
     </JobContext.Provider>
   );

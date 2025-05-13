@@ -44,7 +44,9 @@ const config = {
     FACEBOOK: 'https://facebook.com/championshrservices',
     LINKEDIN: 'https://linkedin.com/company/champions-hr-services',
     TWITTER: 'https://twitter.com/championshr'
-  }
+  },
+  // Mock API URL since we removed the backend
+  API_BASE_URL: ''
 };
 
 export default config;

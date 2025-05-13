@@ -54,6 +54,8 @@ export const sendEmail = async (formData) => {
  */
 
 // Export the mock service
-export default {
+const mockEmailService = {
   sendEmail
 };
+
+export default mockEmailService;

@@ -1,0 +1,7 @@
+.git\
+node_modules\
+build\
+.vercel\
+export-project.bat
+export-exclude.txt
+fix-git-permissions.bat
