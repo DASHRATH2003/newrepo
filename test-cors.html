@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test CORS</title>
+  <script>
+    async function testCORS() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = 'Testing...';
+      
+      try {
+        // Test preflight request (OPTIONS)
+        const response = await fetch('http://localhost:5000/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({
+            name: 'Test User',
+            email: 'test@example.com',
+            option: 'Test Option',
+            contact: '1234567890',
+            message: 'This is a test message'
+          })
+        });
+        
+        const data = await response.json();
+        resultDiv.innerHTML = 'Success! Response: ' + JSON.stringify(data);
+      } catch (error) {
+        resultDiv.innerHTML = 'Error: ' + error.message;
+        console.error('Full error:', error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Test CORS</h1>
+  <button onclick="testCORS()">Test CORS</button>
+  <div id="result"></div>
+  
+  <h2>Instructions:</h2>
+  <ol>
+    <li>Make sure your backend server is running on port 5000</li>
+    <li>Click the "Test CORS" button above</li>
+    <li>If CORS is configured correctly, you should see a success message</li>
+    <li>If there's a CORS error, you'll see an error message</li>
+  </ol>
+  
+  <h2>Network Information:</h2>
+  <p>Open your browser's developer tools (F12) and check the Network tab to see the actual requests and responses.</p>
+</body>
+</html>

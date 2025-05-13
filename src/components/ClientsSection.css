@@ -1,0 +1,10 @@
+.client-logo {
+    width: 120px;
+     background-color: greenyellow;
+    transition: 0.3s ease;
+  }
+  .client-logo:hover {
+    filter: grayscale(0%);
+    transform: scale(1.05);
+  }
+  

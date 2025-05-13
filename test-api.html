@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Test</h1>
+  
+  <div class="test-section">
+    <h2>Test champions-hr-services-5.onrender.com</h2>
+    <button onclick="testApi('https://champions-hr-services-5.onrender.com/api/jobs')">Test Jobs API</button>
+    <button onclick="testApi('https://champions-hr-services-5.onrender.com/api/test')">Test Test API</button>
+    <div id="result1"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test champions-hr-backend.onrender.com</h2>
+    <button onclick="testApi('https://champions-hr-backend.onrender.com/api/jobs')">Test Jobs API</button>
+    <button onclick="testApi('https://champions-hr-backend.onrender.com/api/test')">Test Test API</button>
+    <div id="result2"></div>
+  </div>
+  
+  <script>
+    async function testApi(url) {
+      const resultElement = url.includes('services-5') ? document.getElementById('result1') : document.getElementById('result2');
+      
+      resultElement.innerHTML = '<p>Testing API...</p>';
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        resultElement.innerHTML = `
+          <p class="success">Success! Status: ${response.status}</p>
+          <p>Response:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultElement.innerHTML = `
+          <p class="error">Error: ${error.message}</p>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

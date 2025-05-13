@@ -1,0 +1,12 @@
+.divider {
+    width: 100px;
+    height: 3px;
+    background-color: red;
+  }
+  .feature-box img {
+    border: 2px solid #131212;
+    border-radius: 50%;
+    padding: 10px;
+    background-color: #fff;
+  }
+  

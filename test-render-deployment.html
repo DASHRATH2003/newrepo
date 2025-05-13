@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Render Deployment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Render Deployment</h1>
+  
+  <div class="test-section">
+    <h2>Backend URL</h2>
+    <input type="text" id="backendUrl" value="https://champions-hr-backend.onrender.com" placeholder="Enter your Render backend URL">
+    <p><small>Example: https://champions-hr-backend.onrender.com</small></p>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test API Connection</h2>
+    <button onclick="testApiConnection()">Test Connection</button>
+    <div id="connectionResult"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test Email Sending</h2>
+    <button onclick="testEmailSending()">Send Test Email</button>
+    <div id="emailResult"></div>
+  </div>
+  
+  <script>
+    async function testApiConnection() {
+      const resultElement = document.getElementById('connectionResult');
+      const backendUrl = document.getElementById('backendUrl').value.trim();
+      
+      if (!backendUrl) {
+        resultElement.innerHTML = '<p class="error">Please enter a backend URL</p>';
+        return;
+      }
+      
+      resultElement.innerHTML = '<p>Testing connection...</p>';
+      
+      try {
+        const response = await fetch(`${backendUrl}/api/test`);
+        const data = await response.json();
+        
+        resultElement.innerHTML = `
+          <p class="success">Connection successful!</p>
+          <p>Status: ${response.status}</p>
+          <p>Response:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultElement.innerHTML = `
+          <p class="error">Connection failed!</p>
+          <p>Error: ${error.message}</p>
+          <p>This could be due to:</p>
+          <ul>
+            <li>The server is not running</li>
+            <li>The URL is incorrect</li>
+            <li>CORS issues</li>
+            <li>Network connectivity problems</li>
+          </ul>
+        `;
+      }
+    }
+    
+    async function testEmailSending() {
+      const resultElement = document.getElementById('emailResult');
+      const backendUrl = document.getElementById('backendUrl').value.trim();
+      
+      if (!backendUrl) {
+        resultElement.innerHTML = '<p class="error">Please enter a backend URL</p>';
+        return;
+      }
+      
+      resultElement.innerHTML = '<p>Sending test email...</p>';
+      
+      try {
+        const response = await fetch(`${backendUrl}/api/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Test User',
+            email: 'test@example.com',
+            option: 'Test from Render',
+            contact: '1234567890',
+            message: 'This is a test message sent to the Render deployment',
+            timestamp: new Date().toISOString()
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          resultElement.innerHTML = `
+            <p class="success">Email sent successfully!</p>
+            <p>Response:</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          resultElement.innerHTML = `
+            <p class="error">Email sending failed!</p>
+            <p>Response:</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultElement.innerHTML = `
+          <p class="error">Error: ${error.message}</p>
+          <p>This could be due to:</p>
+          <ul>
+            <li>The server is not running</li>
+            <li>The URL is incorrect</li>
+            <li>CORS issues</li>
+            <li>Email configuration problems</li>
+          </ul>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

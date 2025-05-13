@@ -1,0 +1,18 @@
+.testimonial-section {
+    background: linear-gradient( #c40a0a, #b10909);
+    color: white;
+    padding: 60px 0;
+  }
+  
+  .testimonial-text {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .divider {
+    width: 100px;
+    height: 3px;
+    background-color: white;
+    margin: 0 auto 30px auto;
+  }
+  

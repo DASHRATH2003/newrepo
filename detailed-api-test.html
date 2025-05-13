@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detailed API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .raw-response {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Detailed API Test</h1>
+  
+  <div class="test-section">
+    <h2>Test API Endpoint</h2>
+    <input type="text" id="apiUrl" value="https://champions-hr-services-5.onrender.com/api/jobs" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+    <button onclick="testApiDetailed()">Test API (Detailed)</button>
+    <button onclick="testApiRaw()">Test API (Raw Response)</button>
+    <div id="result"></div>
+  </div>
+  
+  <script>
+    async function testApiDetailed() {
+      const url = document.getElementById('apiUrl').value;
+      const resultElement = document.getElementById('result');
+      
+      resultElement.innerHTML = '<p>Testing API...</p>';
+      
+      try {
+        // Make the request with detailed options
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Get response headers
+        const headers = {};
+        response.headers.forEach((value, name) => {
+          headers[name] = value;
+        });
+        
+        // Try to parse as JSON
+        let data;
+        let isJson = false;
+        const contentType = response.headers.get('content-type');
+        
+        try {
+          if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+            isJson = true;
+          } else {
+            data = await response.text();
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, get the raw text
+          const clonedResponse = response.clone();
+          data = await clonedResponse.text();
+        }
+        
+        // Build the result HTML
+        let resultHtml = `
+          <h3 class="${response.ok ? 'success' : 'error'}">
+            Status: ${response.status} ${response.statusText}
+          </h3>
+          <h4>Response Headers:</h4>
+          <pre>${JSON.stringify(headers, null, 2)}</pre>
+        `;
+        
+        if (isJson) {
+          resultHtml += `
+            <h4>Response Body (JSON):</h4>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          // For text responses, show a preview
+          const preview = data.length > 500 ? data.substring(0, 500) + '...' : data;
+          resultHtml += `
+            <h4>Response Body (Text Preview):</h4>
+            <pre>${escapeHtml(preview)}</pre>
+            <h4>Full Response:</h4>
+            <pre class="raw-response">${escapeHtml(data)}</pre>
+          `;
+        }
+        
+        resultElement.innerHTML = resultHtml;
+      } catch (error) {
+        resultElement.innerHTML = `
+          <h3 class="error">Error: ${error.message}</h3>
+          <p>This could be due to:</p>
+          <ul>
+            <li>Network connectivity issues</li>
+            <li>CORS restrictions</li>
+            <li>The server is down or unreachable</li>
+          </ul>
+        `;
+      }
+    }
+    
+    async function testApiRaw() {
+      const url = document.getElementById('apiUrl').value;
+      const resultElement = document.getElementById('result');
+      
+      resultElement.innerHTML = '<p>Testing API (Raw Response)...</p>';
+      
+      try {
+        // Use XMLHttpRequest for more control
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            const status = xhr.status;
+            const statusText = xhr.statusText;
+            const responseText = xhr.responseText;
+            const responseHeaders = xhr.getAllResponseHeaders();
+            
+            // Parse response headers
+            const headerLines = responseHeaders.trim().split(/[\r\n]+/);
+            const headerMap = {};
+            headerLines.forEach(line => {
+              const parts = line.split(': ');
+              const header = parts.shift();
+              const value = parts.join(': ');
+              headerMap[header] = value;
+            });
+            
+            let resultHtml = `
+              <h3 class="${status >= 200 && status < 300 ? 'success' : 'error'}">
+                Status: ${status} ${statusText}
+              </h3>
+              <h4>Response Headers:</h4>
+              <pre>${JSON.stringify(headerMap, null, 2)}</pre>
+              <h4>Raw Response:</h4>
+              <pre class="raw-response">${escapeHtml(responseText)}</pre>
+            `;
+            
+            resultElement.innerHTML = resultHtml;
+          }
+        };
+        
+        xhr.onerror = function() {
+          resultElement.innerHTML = `
+            <h3 class="error">Network Error</h3>
+            <p>This could be due to:</p>
+            <ul>
+              <li>Network connectivity issues</li>
+              <li>CORS restrictions</li>
+              <li>The server is down or unreachable</li>
+            </ul>
+          `;
+        };
+        
+        xhr.send();
+      } catch (error) {
+        resultElement.innerHTML = `
+          <h3 class="error">Error: ${error.message}</h3>
+        `;
+      }
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Server</title>
+  <script>
+    async function testEmailEndpoint() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = 'Testing...';
+      
+      try {
+        const response = await fetch('http://localhost:5000/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Test User',
+            email: 'test@example.com',
+            option: 'Test Option',
+            contact: '1234567890',
+            message: 'This is a test message'
+          })
+        });
+        
+        const data = await response.json();
+        resultDiv.innerHTML = 'Response: ' + JSON.stringify(data);
+      } catch (error) {
+        resultDiv.innerHTML = 'Error: ' + error.message;
+      }
+    }
+    
+    async function testJobsEndpoint() {
+      const resultDiv = document.getElementById('jobs-result');
+      resultDiv.innerHTML = 'Testing...';
+      
+      try {
+        const response = await fetch('http://localhost:5000/api/jobs');
+        const data = await response.json();
+        resultDiv.innerHTML = 'Response: ' + JSON.stringify(data);
+      } catch (error) {
+        resultDiv.innerHTML = 'Error: ' + error.message;
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Test Server</h1>
+  
+  <h2>Test Email Endpoint</h2>
+  <button onclick="testEmailEndpoint()">Test Email Endpoint</button>
+  <div id="result"></div>
+  
+  <h2>Test Jobs Endpoint</h2>
+  <button onclick="testJobsEndpoint()">Test Jobs Endpoint</button>
+  <div id="jobs-result"></div>
+</body>
+</html>

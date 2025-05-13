@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Email Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c82333;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Email Form</h1>
+  
+  <div class="form-group">
+    <label for="server">Email Server URL:</label>
+    <input type="text" id="server" value="https://champions-hr-services-5.onrender.com">
+  </div>
+  
+  <form id="emailForm">
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" id="name" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="option">Option:</label>
+      <select id="option" required>
+        <option value="">Choose your option</option>
+        <option value="Looking for a Job">Looking for a Job</option>
+        <option value="Looking for Staffing Services">Looking for Staffing Services</option>
+        <option value="Looking for HR Compliance Services">Looking for HR Compliance Services</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="contact">Contact:</label>
+      <input type="tel" id="contact" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="message">Message:</label>
+      <textarea id="message" rows="4" required></textarea>
+    </div>
+    
+    <button type="submit">Send Email</button>
+  </form>
+  
+  <div id="result" style="display: none;"></div>
+  
+  <script>
+    document.getElementById('emailForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const resultElement = document.getElementById('result');
+      resultElement.style.display = 'none';
+      resultElement.className = 'result';
+      
+      const serverUrl = document.getElementById('server').value.trim();
+      const emailEndpoint = `${serverUrl}/api/send-email`;
+      
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        option: document.getElementById('option').value,
+        contact: document.getElementById('contact').value,
+        message: document.getElementById('message').value,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        console.log('Sending request to:', emailEndpoint);
+        console.log('Form data:', formData);
+        
+        const response = await fetch(emailEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        console.log('Response status:', response.status);
+        
+        let responseData;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          responseData = await response.json();
+        } else {
+          const text = await response.text();
+          responseData = { text: text.substring(0, 500) };
+        }
+        
+        if (response.ok) {
+          resultElement.className = 'result success';
+          resultElement.innerHTML = `
+            <h3>Email Sent Successfully!</h3>
+            <pre>${JSON.stringify(responseData, null, 2)}</pre>
+          `;
+        } else {
+          resultElement.className = 'result error';
+          resultElement.innerHTML = `
+            <h3>Error: ${response.status} ${response.statusText}</h3>
+            <pre>${JSON.stringify(responseData, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        resultElement.className = 'result error';
+        resultElement.innerHTML = `
+          <h3>Error: ${error.message}</h3>
+          <p>This could be due to:</p>
+          <ul>
+            <li>Network connectivity issues</li>
+            <li>CORS restrictions</li>
+            <li>The server is down or unreachable</li>
+          </ul>
+        `;
+      }
+      
+      resultElement.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

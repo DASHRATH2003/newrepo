@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Email Sending</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Email Sending</h1>
+  
+  <div class="form-group">
+    <label for="server-url">Server URL:</label>
+    <input type="text" id="server-url" value="http://localhost:5000/api/send-email">
+  </div>
+  
+  <form id="email-form">
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" id="name" value="Test User">
+    </div>
+    
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" value="test@example.com">
+    </div>
+    
+    <div class="form-group">
+      <label for="option">Option:</label>
+      <select id="option">
+        <option value="Looking for a Job">Looking for a Job</option>
+        <option value="Looking for Staffing Services">Looking for Staffing Services</option>
+        <option value="Looking for HR Compliance Services">Looking for HR Compliance Services</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="contact">Contact:</label>
+      <input type="text" id="contact" value="1234567890">
+    </div>
+    
+    <div class="form-group">
+      <label for="message">Message:</label>
+      <textarea id="message" rows="4">This is a test message</textarea>
+    </div>
+    
+    <button type="button" onclick="sendEmail()">Send Test Email</button>
+  </form>
+  
+  <div id="result" class="result" style="display: none;"></div>
+  
+  <script>
+    async function sendEmail() {
+      const resultElement = document.getElementById('result');
+      resultElement.style.display = 'block';
+      resultElement.innerHTML = 'Sending email...';
+      resultElement.className = 'result';
+      
+      const serverUrl = document.getElementById('server-url').value;
+      
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        option: document.getElementById('option').value,
+        contact: document.getElementById('contact').value,
+        message: document.getElementById('message').value,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        const response = await fetch(serverUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          resultElement.innerHTML = '<p class="success">Email sent successfully!</p>';
+          resultElement.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } else {
+          resultElement.innerHTML = '<p class="error">Email sending failed!</p>';
+          resultElement.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+      } catch (error) {
+        resultElement.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+        resultElement.innerHTML += '<p>This could be due to:</p>';
+        resultElement.innerHTML += '<ul>';
+        resultElement.innerHTML += '<li>Server not running</li>';
+        resultElement.innerHTML += '<li>CORS issues</li>';
+        resultElement.innerHTML += '<li>Network connectivity problems</li>';
+        resultElement.innerHTML += '</ul>';
+      }
+    }
+  </script>
+</body>
+</html>
