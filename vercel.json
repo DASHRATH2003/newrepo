@@ -1,12 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/send-email",
-      "destination": "https://champions-hr-email-server.onrender.com/api/send-email"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://champions-hr-services-5.onrender.com/api/:path*"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -31,9 +27,5 @@
         }
       ]
     }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
   ]
 }
