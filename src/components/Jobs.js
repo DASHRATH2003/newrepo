@@ -104,7 +104,7 @@ const Jobs = () => {
 
   return (
     <div className="container py-5">
-      <h2 className="text-center mb-4 fw-bold text-danger">Job Openings</h2>
+      {/* <h2 className="text-center mb-4 fw-bold text-danger">Job Openings</h2> */}
 
       {/* Search Bar
       <div className="row mb-4">

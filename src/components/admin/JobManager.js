@@ -52,7 +52,7 @@ const JobManager = () => {
                 Edit
               </button>
 
-              {job.detailsLink && (
+              {/* {job.detailsLink && (
                 <a
                   href={job.detailsLink}
                   target="_blank"
@@ -61,7 +61,7 @@ const JobManager = () => {
                 >
                   More Details
                 </a>
-              )}
+              )} */}
             </div>
           </div>
         ))
