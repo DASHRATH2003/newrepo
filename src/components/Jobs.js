@@ -4,7 +4,7 @@ import mockJobs from "../data/mockJobs"; // Import directly for fallback
 
 const Jobs = () => {
   // Get jobs data and state from context
-  const { jobs, isLoading: contextLoading, error: contextError, refreshJobs } = useJobContext();
+  const { jobs, isLoading: contextLoading, error: contextError, refreshJobs, deleteJob } = useJobContext();
 
   // Local state
   const [isLoading, setIsLoading] = useState(true);
@@ -99,6 +99,12 @@ const Jobs = () => {
       console.error("Error in filterJobs:", err);
       // Use mockJobs as fallback
       setFilteredJobs(mockJobs);
+    }
+  };
+
+  const handleDeleteJob = (id) => {
+    if (window.confirm("Are you sure you want to delete this job?")) {
+      deleteJob(id);
     }
   };
 
@@ -258,6 +264,15 @@ const Jobs = () => {
                       >
                         <i className="bi bi-send me-1"></i> Apply Now
                       </a>
+                      {/* Delete Button for Admins (visible if admin is logged in) */}
+                      {localStorage.getItem("admin-auth") && (
+                        <button
+                          className="btn btn-danger btn-sm ms-2"
+                          onClick={() => handleDeleteJob(job.id)}
+                        >
+                          <i className="bi bi-trash"></i> Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
