@@ -106,7 +106,7 @@ const Jobs = () => {
     <div className="container py-5">
       <h2 className="text-center mb-4 fw-bold text-danger">Job Openings</h2>
 
-      {/* Search Bar */}
+      {/* Search Bar
       <div className="row mb-4">
         <div className="col-md-6 mx-auto">
           <div className="input-group">
@@ -122,7 +122,7 @@ const Jobs = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Loading State */}
       {isLoading && (
@@ -150,7 +150,7 @@ const Jobs = () => {
           {/* Left Column - Filters and Jobs */}
           <div className="col-md-8">
             {/* Filters */}
-            <div className="card mb-4">
+            {/* <div className="card mb-4">
               <div className="card-header bg-light">
                 <h5 className="mb-0">Filter Jobs</h5>
               </div>
@@ -212,7 +212,7 @@ const Jobs = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Job Listings */}
             <h4 className="mb-3">Available Positions ({filteredJobs.length})</h4>

@@ -3,11 +3,29 @@ import mockJobs from "../../data/mockJobs";
 
 const JobContext = createContext();
 
+// Try to load jobs from localStorage, or fallback to mockJobs
+const getInitialJobs = () => {
+  const stored = localStorage.getItem("jobs");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return mockJobs;
+    }
+  }
+  return mockJobs;
+};
+
 export const JobProvider = ({ children }) => {
-  // Initialize with mock data immediately to avoid empty state
-  const [jobs, setJobs] = useState(mockJobs);
+  // Use localStorage for persistence
+  const [jobs, setJobs] = useState(getInitialJobs());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Save jobs to localStorage whenever jobs change
+  useEffect(() => {
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+  }, [jobs]);
 
   const fetchJobs = async () => {
     try {
@@ -18,8 +36,10 @@ export const JobProvider = ({ children }) => {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Use the mock data
-      setJobs(mockJobs);
+      // Use the mock data only if nothing in localStorage
+      if (!localStorage.getItem("jobs")) {
+        setJobs(mockJobs);
+      }
 
       console.log("Mock jobs loaded:", mockJobs.length);
     } catch (error) {
