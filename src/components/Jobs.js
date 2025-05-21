@@ -264,15 +264,6 @@ const Jobs = () => {
                       >
                         <i className="bi bi-send me-1"></i> Apply Now
                       </a>
-                      {/* Delete Button for Admins (visible if admin is logged in) */}
-                      {localStorage.getItem("admin-auth") && (
-                        <button
-                          className="btn btn-danger btn-sm ms-2"
-                          onClick={() => handleDeleteJob(job.id)}
-                        >
-                          <i className="bi bi-trash"></i> Delete
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

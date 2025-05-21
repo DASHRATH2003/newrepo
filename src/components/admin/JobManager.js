@@ -41,7 +41,7 @@ const JobManager = () => {
 
               <button
                 className="btn btn-danger btn-sm me-2"
-                onClick={() => handleDelete(job.id)}
+                onClick={() => handleDelete(job._id)}
               >
                 Delete
               </button>
