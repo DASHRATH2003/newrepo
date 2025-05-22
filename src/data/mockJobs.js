@@ -105,7 +105,17 @@ const mockJobs = [
     experience: "3-5 years",
     education: "Degree in Design or related field",
     description: "UI/UX designer with experience in creating user-friendly interfaces for web and mobile applications."
-  }
+  },
+    {
+    id: 11,
+    position: "Reactjs Designer",
+    category: "IT",
+    jobLocation: "Hyderabad",
+    driveLocation: null,
+    experience: "3-5 years",
+    education: "Degree in Design or related field",
+    description: "UI/UX designer with experience in creating user-friendly interfaces for web and mobile applications."
+  },
 ];
 
 export default mockJobs;

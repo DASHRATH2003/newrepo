@@ -1,146 +1,186 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import mockJobs from "../../data/mockJobs";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import axios from "axios";
 
 const JobContext = createContext();
-
-// Try to load jobs from localStorage, or fallback to mockJobs
-const getInitialJobs = () => {
-  const stored = localStorage.getItem("jobs");
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return mockJobs;
-    }
-  }
-  return mockJobs;
-};
+const API_BASE_URL = "http://localhost:5000/job";
 
 export const JobProvider = ({ children }) => {
-  // Use localStorage for persistence
-  const [jobs, setJobs] = useState(getInitialJobs());
+  const [jobs, setJobs] = useState([]);
+  const [recentJobs, setRecentJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
   const [error, setError] = useState(null);
+  const [recentJobsError, setRecentJobsError] = useState(null);
 
-  // Save jobs to localStorage whenever jobs change
-  useEffect(() => {
-    localStorage.setItem("jobs", JSON.stringify(jobs));
-  }, [jobs]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
-      console.log("Using mock jobs data since backend was removed");
+      console.log("Fetching jobs...");
       setIsLoading(true);
       setError(null);
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Use the mock data only if nothing in localStorage
-      if (!localStorage.getItem("jobs")) {
-        setJobs(mockJobs);
+      
+      const response = await axios.get(`${API_BASE_URL}/all-jobs`);
+      console.log("Jobs API Response:", response.data);
+      
+      if (response.data.success) {
+        setJobs(response.data.data || []);
+      } else {
+        console.error("API returned success: false", response.data);
+        setError("Failed to fetch jobs");
       }
-
-      console.log("Mock jobs loaded:", mockJobs.length);
     } catch (error) {
-      console.error("Error loading mock jobs:", error);
-      setError("Failed to load jobs data");
+      console.error("Error fetching jobs:", error.response || error);
+      setError(error.response?.data?.message || "Failed to load jobs");
+      setJobs([]); // Reset jobs on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // No dependencies needed for fetchJobs
 
-      // Use fallback data in case of any error
-      if (!jobs || jobs.length === 0) {
-        setJobs([
-          {
-            id: 1,
-            position: "Software Developer",
-            category: "IT",
-            jobLocation: "Remote",
-            experience: "2-4 years",
-            education: "B.Tech/M.Tech",
-            description: "Full-stack developer position"
-          },
-          {
-            id: 2,
-            position: "UI/UX Designer",
-            category: "Design",
-            jobLocation: "Mumbai",
-            experience: "3-5 years",
-            education: "Any Design degree",
-            description: "Design user interfaces"
-          }
-        ]);
+  const fetchRecentJobs = useCallback(async () => {
+    try {
+      console.log("Fetching recent jobs...");
+      setIsLoadingRecent(true);
+      setRecentJobsError(null);
+      
+      const response = await axios.get(`${API_BASE_URL}/recent-jobs`);
+      console.log("Recent Jobs API Response:", response.data);
+      
+      if (response.data.success) {
+        setRecentJobs(response.data.data || []);
+      } else {
+        console.error("API returned success: false for recent jobs", response.data);
+        setRecentJobsError("Failed to fetch recent jobs");
       }
+    } catch (error) {
+      console.error("Error fetching recent jobs:", error.response || error);
+      setRecentJobsError(error.response?.data?.message || "Failed to load recent jobs");
+      setRecentJobs([]); // Reset recent jobs on error
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  }, []); // No dependencies needed for fetchRecentJobs
+
+  const addJob = async (jobData) => {
+    try {
+      console.log("Adding job with data:", jobData);
+      setIsLoading(true);
+      setError(null);
+      
+      // Optimistically update the UI
+      const tempJob = {
+        ...jobData,
+        _id: 'temp_' + Date.now(), // Temporary ID
+        createdAt: new Date().toISOString()
+      };
+      
+      // Update both jobs and recent jobs immediately
+      setJobs(prevJobs => [tempJob, ...prevJobs]);
+      setRecentJobs(prevRecentJobs => {
+        const updatedRecentJobs = [tempJob, ...prevRecentJobs];
+        return updatedRecentJobs.slice(0, 5); // Keep only 5 most recent
+      });
+      
+      const response = await axios.post(`${API_BASE_URL}/create-job`, jobData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log("Add job response:", response.data);
+
+      if (response.data.success) {
+        // Update with the real data from server
+        await fetchJobs();
+        await fetchRecentJobs();
+        return response.data.data;
+      } else {
+        // Revert optimistic updates on error
+        setJobs(prevJobs => prevJobs.filter(job => job._id !== tempJob._id));
+        setRecentJobs(prevJobs => prevJobs.filter(job => job._id !== tempJob._id));
+        throw new Error(response.data.message || "Failed to create job");
+      }
+    } catch (error) {
+      console.error("Error adding job:", error.response || error);
+      throw error.response?.data || error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addJob = async (jobData) => {
-    console.log("Adding job (mock):", jobData);
-    try {
-      // Create a new job with a unique ID
-      const newJob = {
-        ...jobData,
-        id: Date.now(), // Use timestamp as a unique ID
-      };
-
-      // Add the new job to the state
-      setJobs((prev) => [...prev, newJob]);
-
-      console.log("Job added successfully (mock)");
-      return newJob;
-    } catch (error) {
-      console.error("Error adding job:", error);
-      // Handle error
-      throw error;
-    }
-  };
-
   const updateJob = async (updatedJob) => {
-    console.log("Updating job (mock):", updatedJob);
     try {
-      // Update the job in the state
-      setJobs((prev) =>
-        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job))
+      console.log("Updating job:", updatedJob);
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await axios.put(
+        `${API_BASE_URL}/update-job/${updatedJob._id}`,
+        updatedJob,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
 
-      console.log("Job updated successfully (mock)");
-      return updatedJob;
+      if (response.data.success) {
+        await fetchJobs(); // Refresh the jobs list
+        await fetchRecentJobs(); // Also refresh recent jobs list
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || "Failed to update job");
+      }
     } catch (error) {
-      console.error("Error updating job:", error);
-      // Handle error
-      throw error;
+      console.error("Error updating job:", error.response || error);
+      throw error.response?.data || error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const deleteJob = async (id) => {
-    console.log("Deleting job (mock):", id);
     try {
-      // Remove the job from the state
-      setJobs((prev) => prev.filter((job) => job.id !== id));
+      console.log("Deleting job:", id);
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await axios.delete(`${API_BASE_URL}/delete-job/${id}`);
 
-      console.log("Job deleted successfully (mock)");
+      if (response.data.success) {
+        await fetchJobs(); // Refresh the jobs list
+        await fetchRecentJobs(); // Also refresh recent jobs list
+      } else {
+        throw new Error(response.data.message || "Failed to delete job");
+      }
     } catch (error) {
-      console.error("Error deleting job:", error);
-      // Handle error
-      throw error;
+      console.error("Error deleting job:", error.response || error);
+      throw error.response?.data || error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Fetch jobs and recent jobs when component mounts
   useEffect(() => {
     fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchRecentJobs();
+  }, [fetchJobs, fetchRecentJobs]);
+
+  const contextValue = {
+    jobs,
+    recentJobs,
+    isLoading,
+    isLoadingRecent,
+    error,
+    recentJobsError,
+    addJob,
+    updateJob,
+    deleteJob,
+    refreshJobs: fetchJobs,
+    refreshRecentJobs: fetchRecentJobs
+  };
 
   return (
-    <JobContext.Provider value={{
-      jobs,
-      isLoading,
-      error,
-      addJob,
-      updateJob,
-      deleteJob,
-      refreshJobs: fetchJobs
-    }}>
+    <JobContext.Provider value={contextValue}>
       {children}
     </JobContext.Provider>
   );

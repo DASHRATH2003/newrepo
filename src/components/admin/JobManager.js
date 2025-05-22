@@ -1,15 +1,32 @@
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useJobContext } from "../context/JobContext";
-import Logout from "../admin/Logout"; // Import the Logout component
+import Logout from "../admin/Logout";
 
 const JobManager = () => {
-  const { jobs, deleteJob } = useJobContext();
+  const { jobs, deleteJob, refreshJobs, isLoading, error } = useJobContext();
   const navigate = useNavigate();
 
-  const handleDelete = (id) => {
+  // Fetch jobs only once when component mounts
+  useEffect(() => {
+    console.log("JobManager mounted, refreshing jobs...");
+    refreshJobs();
+  }, []); // Remove refreshJobs from dependency array
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Current jobs state:", { jobs, isLoading, error });
+  }, [jobs, isLoading, error]);
+
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this job?")) {
-      deleteJob(id);
+      try {
+        await deleteJob(id);
+        refreshJobs(); // Refresh the list after deletion
+      } catch (error) {
+        console.error("Error deleting job:", error);
+        alert("Failed to delete job. Please try again.");
+      }
     }
   };
 
@@ -24,47 +41,95 @@ const JobManager = () => {
           >
             + Add Job
           </button>
-          <Logout /> {/* Logout Button Added */}
+          <Logout />
         </div>
       </div>
 
-      {jobs.length === 0 ? (
-        <p>No jobs available.</p>
-      ) : (
-        jobs.map((job) => (
-          <div key={job.id} className="card mb-3">
-            <div className="card-body">
-              <h5>{job.position}</h5>
-              <p>
-                {job.experience} | {job.jobLocation}
-              </p>
+      {error && (
+        <div className="alert alert-danger mb-3">
+          <strong>Error:</strong> {error}
+          <button 
+            className="btn btn-link text-danger float-end" 
+            onClick={refreshJobs}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
 
-              <button
-                className="btn btn-danger btn-sm me-2"
-                onClick={() => handleDelete(job._id)}
-              >
-                Delete
-              </button>
-              <button
-                className="btn btn-warning btn-sm"
-                onClick={() => navigate(`/admin/edit-job/${job.id}`, { state: job })}
-              >
-                Edit
-              </button>
-
-              {/* {job.detailsLink && (
-                <a
-                  href={job.detailsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-info btn-sm mt-2 ms-2"
-                >
-                  More Details
-                </a>
-              )} */}
-            </div>
+      {isLoading ? (
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
-        ))
+          <p className="mt-2 text-muted">Loading jobs...</p>
+        </div>
+      ) : jobs.length === 0 && !error ? (
+        <div className="alert alert-info">
+          No jobs available. 
+          <button 
+            className="btn btn-link" 
+            onClick={refreshJobs}
+          >
+            Refresh
+          </button>
+        </div>
+      ) : (
+        <div>
+          <div className="mb-3">
+            <small className="text-muted">
+              Showing {jobs.length} job{jobs.length !== 1 ? 's' : ''}
+            </small>
+            <button 
+              className="btn btn-link btn-sm float-end" 
+              onClick={refreshJobs}
+            >
+              Refresh List
+            </button>
+          </div>
+          {jobs.map((job) => (
+            <div key={job._id} className="card mb-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 className="card-title text-primary">{job.title}</h5>
+                    <h6 className="card-subtitle mb-2 text-muted">{job.company}</h6>
+                    <p className="card-text">
+                      <strong>Location:</strong> {job.location}<br />
+                      <strong>Type:</strong> {job.type}<br />
+                      {job.salary && <><strong>Salary:</strong> {job.salary}<br /></>}
+                    </p>
+                    {job.requirements && job.requirements.length > 0 && (
+                      <div className="mb-2">
+                        <strong>Requirements:</strong>
+                        <ul className="list-unstyled">
+                          {job.requirements.map((req, index) => (
+                            <li key={index}>• {req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <p className="card-text">{job.description}</p>
+                  </div>
+                  <div className="ms-3">
+                    <button
+                      className="btn btn-danger btn-sm d-block mb-2"
+                      onClick={() => handleDelete(job._id)}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className="btn btn-warning btn-sm d-block"
+                      onClick={() => navigate(`/admin/edit-job/${job._id}`, { state: job })}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

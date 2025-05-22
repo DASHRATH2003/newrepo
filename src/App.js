@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css';
 import 'animate.css';
+import { JobProvider } from "./components/context/JobContext";
 
 // Import DevTools for development environment
 import DevTools from './components/DevTools';
@@ -18,35 +19,34 @@ import Footer from './components/Footer';
 import StaffingIntro from "./components/StaffingIntro";
 import MissionVisionHomeSection from './components/MissionVisionHomeSection';
 import CoreValuesHomeSection from './components/CoreValuesHomeSection';
-// import DeliverablesSection from "./components/DeliverablesSection"; // Commented out unused import
 import ClientsSection from "./components/ClientsSection";
-// import TestimonialsSection from "./components/TestimonialsSection"; // Commented out unused import
 import WhyChooseUs from "./components/WhyChooseUs";
 import Services from './components/Services';
 import StaffingSolutions from './components/StaffingSolutions';
 import HRCompliance from './components/HRCompliance';
 import IndustriesWeServe from './components/IndustriesWeServe';
-// import MultiStepForm from './components/MultiStepForm'; // Commented out unused import
 import EmployerForm from './components/EmployerForm';
 import Jobs from './components/Jobs';
+import ViewJob from './components/ViewJob';
 import WhatsAppFloatingIcon from './components/WhatsAppFloatingIcon';
 import IenguriPopupForm from './components/IenguriPopupForm';
 import JobManager from './components/admin/JobManager';
 import AddJob from './components/admin/AddJob';
 import PrivateRoute from "./components/PrivateRoute";
 import Login from "./components/admin/Login";
-import RecentJobToasts from "./components/RecentJobToasts"
-import FreePlacementToast from "./components/FreePlacementToast"
+import FreePlacementToast from "./components/FreePlacementToast";
+import RecentJobPopup from './components/RecentJobPopup';
 
 function AppContent() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   return (
-    <>
+    <div className="App">
       <Topbar />
       <Navbar />
       <FreePlacementToast/>
+      <RecentJobPopup />
 
       {isHomePage && (
         <>
@@ -54,12 +54,9 @@ function AppContent() {
           <StaffingIntro />
           <MissionVisionHomeSection />
           <Services />
-          {/* <MultiStepForm /> */}
           <CoreValuesHomeSection />
-          {/* <DeliverablesSection /> */}
           <WhyChooseUs />
           <ClientsSection />
-          {/* <TestimonialsSection /> */}
         </>
       )}
 
@@ -75,6 +72,7 @@ function AppContent() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/employer-form" element={<EmployerForm />} />
         <Route path="/jobs" element={<Jobs />} />
+        <Route path="/view-job/:id" element={<ViewJob />} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected Admin Routes */}
@@ -93,21 +91,20 @@ function AppContent() {
       </Routes>
 
       <Footer />
-      <RecentJobToasts />
       <IenguriPopupForm />
       <WhatsAppFloatingIcon />
       <DevTools />
-
-    </>
+    </div>
   );
 }
 
-
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <JobProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </JobProvider>
   );
 }
 

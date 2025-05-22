@@ -1,404 +1,237 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useJobContext } from "./context/JobContext";
-import mockJobs from "../data/mockJobs"; // Import directly for fallback
+import { useNavigate, useLocation } from "react-router-dom";
+import { FaBriefcase, FaMapMarkerAlt, FaGraduationCap, FaLocationArrow, FaUpload, FaEnvelope, FaPhone } from 'react-icons/fa';
+import './Jobs.css';
 
 const Jobs = () => {
-  // Get jobs data and state from context
-  const { jobs, isLoading: contextLoading, error: contextError, refreshJobs, deleteJob } = useJobContext();
-
-  // Local state
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    category: "",
-    location: "",
-    experience: "",
-  });
+  const location = useLocation();
+  const { 
+    jobs, 
+    recentJobs,
+    isLoading: contextLoading, 
+    isLoadingRecent,
+    error: contextError,
+    recentJobsError, 
+    refreshJobs,
+    refreshRecentJobs 
+  } = useJobContext();
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const [selectedJob, setSelectedJob] = useState(null); // for modal
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
-  // Use this effect to initialize jobs and handle loading state
   useEffect(() => {
-    console.log("Jobs component mounted");
-
-    // Try to refresh jobs data
     refreshJobs();
+    refreshRecentJobs();
+  }, [refreshJobs, refreshRecentJobs]);
 
-    // Set a timeout to ensure we show loading state for at least 1 second
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [refreshJobs]);
-
-  // Update local error state when context error changes
   useEffect(() => {
-    if (contextError) {
-      setError(contextError);
+    if (jobs) {
+      setFilteredJobs(jobs);
     }
-  }, [contextError]);
+  }, [jobs]);
 
-  // This effect runs when jobs change or filters change
-  useEffect(() => {
-    console.log("Jobs data or filters changed:", {
-      jobsLength: jobs?.length || 0,
-      searchTerm,
-      filters
-    });
-
-    try {
-      filterJobs();
-    } catch (err) {
-      console.error("Error filtering jobs:", err);
-      setError("Error filtering jobs. Please try again.");
-
-      // Use mockJobs as fallback
-      setFilteredJobs(mockJobs);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, filters, jobs]);
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const handleViewJob = (jobId) => {
+    navigate(`/view-job/${jobId}`);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleApply = (job) => {
+    const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScRvVyo6og6ntYbH9Y12OaxBD1lCZcq_iv7TFRNpW3BbTralg/viewform?usp=sf_link";
+    window.open(googleFormUrl, '_blank');
   };
 
-  const filterJobs = () => {
-    // Safety check for jobs array
-    if (!jobs || !Array.isArray(jobs) || jobs.length === 0) {
-      console.warn("Jobs array is empty or invalid, using mockJobs as fallback");
-      setFilteredJobs(mockJobs);
-      return;
-    }
-
-    try {
-      const filtered = jobs.filter((job) => {
-        // Safety checks for each property
-        const position = job.position || "";
-        const category = job.category || "";
-        const jobLocation = job.jobLocation || "";
-        const experience = job.experience || "";
-
-        const matchesSearch = position.toLowerCase().includes((searchTerm || "").toLowerCase());
-        const matchesCategory = filters.category ? category === filters.category : true;
-        const matchesLocation = filters.location ? jobLocation.includes(filters.location) : true;
-        const matchesExperience = filters.experience ? experience === filters.experience : true;
-
-        return matchesSearch && matchesCategory && matchesLocation && matchesExperience;
-      });
-
-      console.log("Filtered jobs:", filtered.length);
-      setFilteredJobs(filtered);
-    } catch (err) {
-      console.error("Error in filterJobs:", err);
-      // Use mockJobs as fallback
-      setFilteredJobs(mockJobs);
-    }
+  const handleResumeUpload = () => {
+    fileInputRef.current.click();
   };
 
-  const handleDeleteJob = (id) => {
-    if (window.confirm("Are you sure you want to delete this job?")) {
-      deleteJob(id);
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Check file type
+      if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
+        alert('Please upload a PDF or Word document');
+        return;
+      }
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should be less than 5MB');
+        return;
+      }
+      // Here you would handle the file upload
+      console.log('Resume selected:', file.name);
+      // You can add your file upload logic here
     }
   };
 
   return (
-    <div className="container py-5">
-      {/* <h2 className="text-center mb-4 fw-bold text-danger">Job Openings</h2> */}
-
-      {/* Search Bar
-      <div className="row mb-4">
-        <div className="col-md-6 mx-auto">
-          <div className="input-group">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search for jobs..."
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-            <button className="btn btn-danger" type="button">
-              <i className="bi bi-search"></i> Search
-            </button>
+    <div className="jobs-layout">
+      <div className="jobs-container">
+        <div className="jobs-list-section">
+          <div className="results-header">
+            <h2>Available Positions <span>({filteredJobs.length})</span></h2>
           </div>
-        </div>
-      </div> */}
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="text-center my-5">
-          <div className="spinner-border text-danger" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-2">Loading job listings...</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !isLoading && (
-        <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Error Loading Jobs</h4>
-          <p>{error}</p>
-          <hr />
-          <p className="mb-0">Please try refreshing the page or contact support if the problem persists.</p>
-        </div>
-      )}
-
-      {/* Main Content - Only show when not loading */}
-      {!isLoading && !error && (
-        <div className="row">
-          {/* Left Column - Filters and Jobs */}
-          <div className="col-md-8">
-            {/* Filters */}
-            {/* <div className="card mb-4">
-              <div className="card-header bg-light">
-                <h5 className="mb-0">Filter Jobs</h5>
-              </div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="category" className="form-label">Category</label>
-                    <select
-                      id="category"
-                      name="category"
-                      className="form-select"
-                      value={filters.category}
-                      onChange={handleFilterChange}
-                    >
-                      <option value="">All Categories</option>
-                      <option value="IT">IT</option>
-                      <option value="Human Resources">Human Resources</option>
-                      <option value="Sales">Sales</option>
-                      <option value="Marketing">Marketing</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Customer Service">Customer Service</option>
-                    </select>
-                  </div>
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="location" className="form-label">Location</label>
-                    <select
-                      id="location"
-                      name="location"
-                      className="form-select"
-                      value={filters.location}
-                      onChange={handleFilterChange}
-                    >
-                      <option value="">All Locations</option>
-                      <option value="Bangalore">Bangalore</option>
-                      <option value="Mumbai">Mumbai</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Hyderabad">Hyderabad</option>
-                      <option value="Chennai">Chennai</option>
-                      <option value="Pune">Pune</option>
-                      <option value="Remote">Remote</option>
-                    </select>
-                  </div>
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="experience" className="form-label">Experience</label>
-                    <select
-                      id="experience"
-                      name="experience"
-                      className="form-select"
-                      value={filters.experience}
-                      onChange={handleFilterChange}
-                    >
-                      <option value="">All Experience</option>
-                      <option value="1-2 years">1-2 years</option>
-                      <option value="2-4 years">2-4 years</option>
-                      <option value="3-5 years">3-5 years</option>
-                      <option value="5-7 years">5-7 years</option>
-                      <option value="5-8 years">5-8 years</option>
-                    </select>
-                  </div>
+          {contextLoading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Loading jobs...</p>
+            </div>
+          ) : contextError ? (
+            <div className="error-message">
+              <h3>Error Loading Jobs</h3>
+              <p>{contextError}</p>
+              <button onClick={refreshJobs}>Try Again</button>
+            </div>
+          ) : (
+            <>
+              {filteredJobs.length === 0 ? (
+                <div className="no-jobs">
+                  <h3>No Jobs Found</h3>
+                  <p>There are currently no job openings available.</p>
                 </div>
-              </div>
-            </div> */}
-
-            {/* Job Listings */}
-            <h4 className="mb-3">Available Positions ({filteredJobs.length})</h4>
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
-                <div key={job.id} className="card mb-4 shadow-sm">
-                  <div className="card-body">
-                    <h5 className="card-title text-danger">{job.position}</h5>
-                    <div className="d-flex flex-wrap mb-3">
-                      <span className="badge bg-light text-dark me-2 mb-1">
-                        <i className="bi bi-briefcase me-1"></i> {job.category}
-                      </span>
-                      <span className="badge bg-light text-dark me-2 mb-1">
-                        <i className="bi bi-geo-alt me-1"></i> {job.jobLocation}
-                      </span>
-                      <span className="badge bg-light text-dark me-2 mb-1">
-                        <i className="bi bi-clock-history me-1"></i> {job.experience}
-                      </span>
-                    </div>
-
-                    <div className="mb-3">
-                      <p className="mb-1"><strong>Education:</strong> {job.education}</p>
-                      {job.driveLocation && (
-                        <p className="mb-1"><strong>Drive Location:</strong> {job.driveLocation}</p>
-                      )}
-                      {job.description && (
-                        <p className="mb-1"><strong>Description:</strong> {job.description}</p>
-                      )}
-                    </div>
-
-                    <div className="d-flex justify-content-between align-items-center">
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => setSelectedJob(job)}
-                      >
-                        <i className="bi bi-eye me-1"></i> View Details
-                      </button>
-                      <a
-                        href="https://docs.google.com/forms/d/e/1FAIpQLScRvVyo6og6ntYbH9Y12OaxBD1lCZcq_iv7TFRNpW3BbTralg/viewform"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-danger btn-sm"
-                      >
-                        <i className="bi bi-send me-1"></i> Apply Now
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="alert alert-info">
-                <i className="bi bi-info-circle me-2"></i>
-                No jobs found matching your criteria. Try adjusting your filters.
-              </div>
-            )}
-          </div>
-
-          {/* Right Column - Recent Jobs */}
-          <div className="col-md-4">
-            <div className="card border-danger mb-4 shadow-sm sticky-top" style={{ top: "20px" }}>
-              <div className="card-header bg-danger text-white">
-                <h5 className="mb-0">Recent Job Openings</h5>
-              </div>
-              <ul className="list-group list-group-flush">
-                {Array.isArray(jobs) && jobs.length > 0 ? (
-                  [...jobs].slice(-5).reverse().map((job) => (
-                    <li
-                      key={job.id}
-                      className="list-group-item list-group-item-action"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setSelectedJob(job)}
-                    >
-                      <h6 className="mb-1">{job.position}</h6>
-                      <div className="d-flex justify-content-between">
-                        <small className="text-muted">{job.jobLocation}</small>
-                        <small className="text-muted">{job.experience}</small>
+              ) : (
+                <div className="jobs-grid">
+                  {filteredJobs.map((job) => (
+                    <div key={job._id} className="job-card">
+                      {/* 1st: Job Title */}
+                      <div className="job-title-section">
+                        <h3>{job.title}</h3>
                       </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="list-group-item text-center">
-                    <i className="bi bi-info-circle me-2"></i>
-                    No recent jobs available
-                  </li>
-                )}
-              </ul>
-              <div className="card-footer bg-light">
-                <a
-                  href="https://docs.google.com/forms/d/e/1FAIpQLScRvVyo6og6ntYbH9Y12OaxBD1lCZcq_iv7TFRNpW3BbTralg/viewform"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-danger btn-sm w-100"
-                >
-                  <i className="bi bi-file-earmark-text me-1"></i> Submit Your Resume
-                </a>
-              </div>
-            </div>
 
-            {/* Contact Card */}
-            <div className="card border-secondary mb-4 shadow-sm">
-              <div className="card-header bg-secondary text-white">
-                <h5 className="mb-0">Need Help?</h5>
-              </div>
-              <div className="card-body">
-                <p>Can't find what you're looking for? Contact our recruitment team for assistance.</p>
-                <a
-                  href="mailto:info@championshrservices.com"
-                  className="btn btn-outline-secondary btn-sm w-100 mb-2"
-                >
-                  <i className="bi bi-envelope me-1"></i> Email Us
-                </a>
-                <a
-                  href="tel:+911234567890"
-                  className="btn btn-outline-secondary btn-sm w-100"
-                >
-                  <i className="bi bi-telephone me-1"></i> Call Us
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                      {/* 2nd: Category, Location, Experience */}
+                      <div className="job-primary-details">
+                        <span className="category-tag">{job.category}</span>
+                        <div className="detail-item">
+                          <FaMapMarkerAlt />
+                          <span>{job.location}</span>
+                        </div>
+                        <div className="detail-item">
+                          <FaBriefcase />
+                          <span>{job.experience}</span>
+                        </div>
+                      </div>
 
-      {/* Job Detail Modal */}
-      {selectedJob && (
-        <div className="modal show fade d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content border-danger">
-              <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title">{selectedJob.position}</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setSelectedJob(null)}
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div className="modal-body">
-                <div className="row">
-                  <div className="col-md-6">
-                    <h6 className="text-danger">Job Details</h6>
-                    <p><strong>Category:</strong> {selectedJob.category}</p>
-                    <p><strong>Experience:</strong> {selectedJob.experience}</p>
-                    <p><strong>Education:</strong> {selectedJob.education}</p>
-                    {selectedJob.description && (
-                      <p><strong>Description:</strong> {selectedJob.description}</p>
-                    )}
-                  </div>
-                  <div className="col-md-6">
-                    <h6 className="text-danger">Location</h6>
-                    <p><strong>Job Location:</strong> {selectedJob.jobLocation}</p>
-                    {selectedJob.driveLocation && (
-                      <p><strong>Drive Location:</strong> {selectedJob.driveLocation}</p>
-                    )}
-                    <h6 className="text-danger mt-3">How to Apply</h6>
-                    <p>Click the Apply button below to submit your application through our online form.</p>
-                  </div>
+                      {/* 3rd: Education */}
+                      <div className="job-education">
+                        <div className="detail-item">
+                          <FaGraduationCap />
+                          <span>{job.education}</span>
+                        </div>
+                      </div>
+
+                      {/* 4th: Drive Location */}
+                      {job.driveLocation && (
+                        <div className="job-drive-location">
+                          <div className="detail-item">
+                            <FaLocationArrow />
+                            <span>Drive: {job.driveLocation}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5th: Job Description */}
+                      <div className="job-description-section">
+                        <h4>Description:</h4>
+                        <p className="job-description">
+                          {job.description.length > 150
+                            ? `${job.description.substring(0, 150)}...`
+                            : job.description}
+                        </p>
+                      </div>
+
+                      {/* 6th: Buttons */}
+                      <div className="button-group">
+                        <button 
+                          className="view-button"
+                          onClick={() => handleViewJob(job._id)}
+                        >
+                          View More
+                        </button>
+                        <button 
+                          className="apply-button"
+                          onClick={() => handleApply(job)}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setSelectedJob(null)}
-                >
-                  <i className="bi bi-x-circle me-1"></i> Close
-                </button>
-                <a
-                  href="https://docs.google.com/forms/d/e/1FAIpQLScRvVyo6og6ntYbH9Y12OaxBD1lCZcq_iv7TFRNpW3BbTralg/viewform"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-danger"
-                >
-                  <i className="bi bi-send me-1"></i> Apply Now
-                </a>
-              </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="sidebar-container">
+        <div className="recent-jobs-card">
+          <h3>Recent Job Openings</h3>
+          <div className="recent-jobs-content">
+            <div className="recent-jobs-list">
+              {isLoadingRecent ? (
+                <div className="recent-jobs-loading">
+                  <div className="spinner-small"></div>
+                  <p>Loading recent jobs...</p>
+                </div>
+              ) : recentJobsError ? (
+                <div className="recent-jobs-error">
+                  <p>{recentJobsError}</p>
+                  <button onClick={refreshRecentJobs} className="retry-button">
+                    Retry
+                  </button>
+                </div>
+              ) : recentJobs.length === 0 ? (
+                <div className="no-recent-jobs">
+                  <p>No recent job openings</p>
+                </div>
+              ) : (
+                recentJobs.map((job) => (
+                  <div key={job._id} className="recent-job-item">
+                    <div className="recent-job-info">
+                      <h4 className="recent-job-title">{job.title}</h4>
+                      <div className="recent-job-location">
+                        <FaMapMarkerAlt size={12} />
+                        {job.location}
+                      </div>
+                    </div>
+                    <div className="recent-job-experience">
+                      {job.experience}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="resume-upload-section">
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx"
+                style={{ display: 'none' }}
+              />
+              <button className="submit-resume-btn" onClick={handleResumeUpload}>
+                <FaUpload style={{ marginRight: '8px' }} />
+                Submit Your Resume
+              </button>
             </div>
           </div>
         </div>
-      )}
+
+        <div className="need-help-section">
+          <h3>Need Help?</h3>
+          <p>Can't find what you're looking for? Contact our recruitment team for assistance.</p>
+          <div className="contact-options">
+            <a href="mailto:recruitment@champions.com" className="contact-link">
+              <FaEnvelope />
+              Email Us
+            </a>
+            <a href="tel:+919632492563" className="contact-link">
+              <FaPhone />
+              Call Us
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
